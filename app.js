@@ -24,8 +24,8 @@ board_state = [
 ];
 
 const pieces = {
-  nim: { king:"🧙‍♂️", queen:"♕", rook:"♖", elf:"🧝", knight:"♘", pawn:"♙" },
-  mor: { king:"👁️", queen:"♛", rook:"♜", specter:"👤", knight:"♞", pawn:"♟" }
+  nim: { king:"🧙", queen:"👸", rook:"🏰", elf:"🧝", knight:"♘", pawn:"♙" },
+  mor: { king:"🛡️", queen:"♛", rook:"♜", specter:"👻", knight:"♞", pawn:"♟" }
 };
 
 // Render scacchiera
@@ -52,7 +52,7 @@ function renderBoard(){
       board.appendChild(cell);
     }
   }
-  info.textContent="Tu sei "+color.toUpperCase()+". Turno: "+turn.toUpperCase();
+  info.textContent="Sei "+(color?color.toUpperCase():"...")+" | Turno: "+turn.toUpperCase();
 }
 
 // Click su cella
@@ -81,7 +81,7 @@ function isMoveLegal(r1,c1,r2,c2){
     if(dr===dir && Math.abs(dc)===1 && target && !target.startsWith(col)) return true;
     return false;
   }
-  return true; // semplificato per ora
+  return true;
 }
 
 // Esegui mossa
@@ -93,12 +93,16 @@ function makeMove(r1,c1,r2,c2){
   board_state[r1][c1]='';
   turn = turn==='nim'?'mor':'nim';
   renderBoard();
-  if(conn) conn.send({board:board_state,turn:turn});
+
+  // invia mossa all'altro peer
+  if(conn && conn.open){
+    conn.send({board:board_state, turn:turn});
+  }
 }
 
-// PeerJS
+// PeerJS gestione connessione
 peer.on('open', id => {
-  color = 'nim';
+  color='nim';
   info.textContent="Sei "+color.toUpperCase()+". ID tuo: "+id;
 });
 
@@ -124,6 +128,8 @@ peer.on('connection', connection => {
   color='mor';
   setupDiv.style.display='none';
   renderBoard();
+  // invia subito lo stato corrente al nuovo peer
+  conn.send({board:board_state, turn:turn});
   conn.on('data', data=>{
     board_state = data.board;
     turn = data.turn;
@@ -132,3 +138,7 @@ peer.on('connection', connection => {
 });
 
 renderBoard();
+
+renderBoard();
+
+
