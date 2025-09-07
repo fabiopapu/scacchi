@@ -1,1 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>♟ Ribillen Online</title>
+<style>
+body { font-family: "Garamond", serif; text-align:center; background:#1b1b1b; color:#f5f5dc;}
+h1 { margin:20px; font-size:2em; color:#d4af37; text-shadow:2px2px8px black;}
+#board { display:grid; grid-template-columns:repeat(8,70px); grid-template-rows:repeat(8,70px); margin:20px auto; border:4px solid #333;}
+.cell { width:70px; height:70px; display:flex; align-items:center; justify-content:center; font-size:36px; user-select:none;}
+.dark{background:#333;}
+.light{background:#f5deb3;}
+.piece{cursor:pointer;}
+.white-emoji{color:#fff !important; -webkit-text-fill-color:white; filter:brightness(200%); text-shadow:0 0 5px #fff;}
+.mor{color:#000;}
+.specter{color:#000; font-size:32px; font-weight:bold;}
+.sauron{color:#000; font-size:36px;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+<h1>♟ Ribillen Online ♟</h1>
+<div id="board"></div>
+<p id="info">Connettendo...</p>
+<script>
+const socket = io();
+let sid = Math.random().toString(36).substring(2,10);
+let color = null;
+let board_state = [];
+let selected = null;
+let turn = 'nim';
 
+const pieces = {
+  nim: { king:"🧙‍♂️", queen:"♕", rook:"♖", bishop:"🧝", knight:"♘", pawn:"♙" },
+  mor: { king:"👁️‍🗨️", queen:"♛", rook:"♜", bishop:"👤", knight:"♞", pawn:"♟" }
+};
+
+function renderBoard(){
+  const board = document.getElementById("board");
+  board.innerHTML='';
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const cell=document.createElement("div");
+      cell.className="cell "+((r+c)%2===0?"light":"dark");
+      cell.dataset.row=r;
+      cell.dataset.col=c;
+      let code=board_state[r][c];
+      if(code){
+        const span=document.createElement("span");
+        let [col,type]=code.split("_");
+        span.textContent=pieces[col][type];
+        span.className="piece "+(col==='nim'?'white-emoji':'mor');
+        if(type==='bishop' && col==='mor') span.className="piece specter mor";
+        if(type==='king' && col==='mor') span.className="piece sauron mor";
+        if(type==='king' && col==='nim') span.className="piece white-emoji";
+        cell.appendChild(span);
+      }
+      cell.addEventListener('click',()=>onCellClick(r,c));
+      board.appendChild(cell);
+    }
+  }
+  document.getElementById("info").textContent="Tu sei "+color.toUpperCase()+". Turno: "+turn.toUpperCase();
+}
+
+function onCellClick(r,c){
+  if(color!==turn) return;
+  if(selected){
+    socket.emit('move',{sid:sid, from:[selected.r,selected.c], to:[r,c]});
+    selected=null;
+  } else {
+    if(board_state[r][c] && board_state[r][c].startsWith(color)) selected={r,c};
+  }
+}
+
+socket.emit('join',{sid:sid});
+socket.on('assign_color',c=>{
+  color=c;
+  document.getElementById("info").textContent="Sei "+color.toUpperCase();
+});
+socket.on('update_board',data=>{
+  board_state=data.board;
+  turn=data.turn;
+  renderBoard();
+});
+socket.on('illegal_move',()=>alert("Mossa non valida o non è il tuo turno"));
+</script>
+</body>
+</html>
