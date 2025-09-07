@@ -1,13 +1,17 @@
 {
   "name": "ribillen-web",
   "version": "1.0.0",
-  "description": "Ribillen Web - Scacchi Fantasy Online",
+  "description": "Scacchi Fantasy Gandalf vs Sauron",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
-  }
+    "express": "^4.18.2",
+    "ws": "^8.15.0"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "license": "MIT"
 }
-
