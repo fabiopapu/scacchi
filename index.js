@@ -3,7 +3,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servi la cartella ribillen-web come statica
+// Serve tutti i file della cartella come statici
 app.use(express.static(__dirname));
 
 // Tutte le richieste puntano a index.html
