@@ -1,4 +1,4 @@
-// app.js - Scacchi Fantasy online con WebSocket
+// app.js - Scacchi Fantasy Gandalf vs Sauron con WebSocket
 
 let board_state = [
   ["mor_rook","mor_knight","mor_specter","mor_queen","mor_king","mor_specter","mor_knight","mor_rook"],
@@ -26,19 +26,25 @@ const info = document.getElementById("info");
 // --- WEBSOCKET ---
 let ws = new WebSocket(`wss://${location.host}`);
 
-ws.onopen = () => {
-  console.log("Connesso al server WebSocket");
-};
+ws.onopen = () => console.log("Connesso al server WebSocket");
 
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  if(data.type === 'move'){
+
+  if(data.type === 'assignColor'){
+    color = data.color;
+    renderBoard();
+  } else if(data.type === 'startGame'){
+    renderBoard();
+  } else if(data.type === 'move'){
     board_state = data.board;
     turn = data.turn;
     renderBoard();
-  } else if(data.type === 'assignColor'){
-    color = data.color;
-    renderBoard();
+  } else if(data.type === 'opponentLeft'){
+    alert("Il tuo avversario ha abbandonato la partita!");
+    turn = color; // torna al turno del giocatore rimasto
+  } else if(data.error){
+    alert(data.error);
   }
 };
 
@@ -115,122 +121,5 @@ function makeMove(r1,c1,r2,c2){
 
 renderBoard();
 
-const pieces = {
-  nim: { king:"🧙", queen:"👸", rook:"🏰", elf:"🧝", knight:"♘", pawn:"♙" },
-  mor: { king:"🛡️", queen:"♛", rook:"♜", specter:"👻", knight:"♞", pawn:"♟" }
-};
-
-// Render scacchiera
-function renderBoard(){
-  const board = document.getElementById("board");
-  board.innerHTML='';
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
-      const cell=document.createElement("div");
-      cell.className="cell "+((r+c)%2===0?"light":"dark");
-      cell.dataset.row=r;
-      cell.dataset.col=c;
-      let code=board_state[r][c];
-      if(code){
-        const span=document.createElement("span");
-        let [col,type]=code.split("_");
-        span.textContent=pieces[col][type];
-        span.className="piece "+(col==='nim'?'white-emoji':'mor');
-        if(type==='specter') span.className="piece specter mor";
-        if(type==='king' && col==='mor') span.className="piece sauron mor";
-        cell.appendChild(span);
-      }
-      cell.addEventListener('click',()=>onCellClick(r,c));
-      board.appendChild(cell);
-    }
-  }
-  info.textContent="Sei "+(color?color.toUpperCase():"...")+" | Turno: "+turn.toUpperCase();
-}
-
-// Click su cella
-function onCellClick(r,c){
-  if(color!==turn) return;
-  if(selected){
-    makeMove(selected.r,selected.c,r,c);
-    selected=null;
-  } else {
-    if(board_state[r][c] && board_state[r][c].startsWith(color)) selected={r,c};
-  }
-}
-
-// Logica mosse base
-function isMoveLegal(r1,c1,r2,c2){
-  let code = board_state[r1][c1];
-  if(!code) return false;
-  let [col,type] = code.split("_");
-  let target = board_state[r2][c2];
-  if(target && target.startsWith(col)) return false;
-  let dr = r2-r1, dc = c2-c1;
-  if(type==='pawn'){
-    let dir = col==='nim'?-1:1;
-    if(dr===dir && dc===0 && !target) return true;
-    if(dr===2*dir && dc===0 && !target && ((col==='nim'&&r1===6)||(col==='mor'&&r1===1)) && !board_state[r1+dir][c1]) return true;
-    if(dr===dir && Math.abs(dc)===1 && target && !target.startsWith(col)) return true;
-    return false;
-  }
-  return true;
-}
-
-// Esegui mossa
-function makeMove(r1,c1,r2,c2){
-  if(!isMoveLegal(r1,c1,r2,c2)) return;
-  let piece = board_state[r1][c1];
-  if(piece.endsWith("pawn") && (r2===0 || r2===7)) piece = color+"_queen";
-  board_state[r2][c2]=piece;
-  board_state[r1][c1]='';
-  turn = turn==='nim'?'mor':'nim';
-  renderBoard();
-
-  // invia mossa all'altro peer
-  if(conn && conn.open){
-    conn.send({board:board_state, turn:turn});
-  }
-}
-
-// PeerJS gestione connessione
-peer.on('open', id => {
-  color='nim';
-  info.textContent="Sei "+color.toUpperCase()+". ID tuo: "+id;
-});
-
-connectBtn.addEventListener('click', ()=>{
-  const remoteId = peerInput.value.trim();
-  if(remoteId){
-    conn = peer.connect(remoteId);
-    conn.on('open', ()=>{ 
-      color='mor'; 
-      setupDiv.style.display='none'; 
-      renderBoard();
-    });
-    conn.on('data', data=>{
-      board_state = data.board;
-      turn = data.turn;
-      renderBoard();
-    });
-  }
-});
-
-peer.on('connection', connection => {
-  conn = connection;
-  color='mor';
-  setupDiv.style.display='none';
-  renderBoard();
-  // invia subito lo stato corrente al nuovo peer
-  conn.send({board:board_state, turn:turn});
-  conn.on('data', data=>{
-    board_state = data.board;
-    turn = data.turn;
-    renderBoard();
-  });
-});
-
-renderBoard();
-
-renderBoard();
 
 
