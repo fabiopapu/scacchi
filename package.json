@@ -1,0 +1,10 @@
+{
+  "name": "ribillen-web",
+  "version": "1.0.0",
+  "description": "Ribillen Web - Scacchi Fantasy Online",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {}
+}
