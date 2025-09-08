@@ -1,22 +1,54 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<title>♟ Ribillen Online</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Scacchi Fantasy - Gandalf vs Sauron</title>
+  <style>
+    body {
+      background: #222;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      margin: 20px auto;
+      border: 4px solid #444;
+      width: 480px;
+      height: 480px;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      cursor: pointer;
+    }
+    .light { background: #f0d9b5; }
+    .dark { background: #b58863; }
+    .piece {
+      font-size: 36px;
+    }
+    .mor { color: black; }
+    .white-emoji { color: white; text-shadow: 0 0 2px #000; }
+    .specter { opacity: 0.8; }
+    .sauron { color: red; font-weight: bold; }
+    #info {
+      margin-top: 15px;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
-<h1>♟ Ribillen Online ♟</h1>
+  <h1>♟ Scacchi Fantasy ♙</h1>
+  <div id="board"></div>
+  <div id="info">Connessione...</div>
 
-<div id="board"></div>
-
-<div id="setup">
-  <p id="info">Creazione ID Peer...</p>
-  <input type="text" id="peer-id" placeholder="Inserisci ID avversario">
-  <button id="connect-btn">Connetti</button>
-</div>
-
-<script src="app.js"></script>
+  <!-- Client WS -->
+  <script src="app.js"></script>
 </body>
 </html>
