@@ -29,6 +29,8 @@ wss.on('connection', ws => {
   if(players.length === 2){
     // notifico entrambi che la partita parte
     players.forEach(p => p.ws.send(JSON.stringify({type:'startGame', msg:'Giocatori connessi, inizia la partita!'})));
+  } else {
+    ws.send(JSON.stringify({type:'wait', msg:'In attesa che l’altro giocatore si connetta...'}));
   }
 
   ws.on('message', message => {
