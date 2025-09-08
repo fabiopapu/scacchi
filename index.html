@@ -43,29 +43,39 @@ const info = document.getElementById('info');
 
 const ws = new WebSocket(`wss://${location.host}`);
 
-ws.onopen = ()=>console.log("Connesso al server WS");
+ws.onopen = () => console.log("Connesso al server WS");
 
-ws.onmessage = event=>{
+ws.onmessage = event => {
   const data = JSON.parse(event.data);
 
-  if(data.type === 'assignColor'){
-    color = data.color;
-    info.textContent = `Sei ${color.toUpperCase()} | In attesa avversario...`;
-  }
+  switch(data.type){
+    case 'assignColor':
+      color = data.color;
+      info.textContent = `Sei ${color.toUpperCase()} | In attesa avversario...`;
+      break;
 
-  if(data.type === 'bothConnected'){
-    info.textContent = `Giocatori connessi! Turno: ${turn.toUpperCase()}`;
-    renderBoard();
-  }
+    case 'bothConnected':
+      info.textContent = `Giocatori connessi! Turno: ${turn.toUpperCase()}`;
+      renderBoard();
+      break;
 
-  if(data.type === 'move'){
-    board_state = data.board;
-    turn = data.turn;
-    renderBoard();
-  }
+    case 'move':
+      board_state = data.board;
+      turn = data.turn;
+      renderBoard();
+      break;
 
-  if(data.type === 'opponentLeft'){
-    info.textContent = "Avversario disconnesso!";
+    case 'opponentLeft':
+      info.textContent = "Avversario disconnesso!";
+      break;
+
+    case 'full':
+      alert(data.msg);
+      break;
+
+    case 'wait':
+      info.textContent = data.msg;
+      break;
   }
 };
 
