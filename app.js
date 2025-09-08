@@ -1,4 +1,4 @@
-// app.js - Scacchi Fantasy Gandalf vs Sauron con WS
+// app.js
 const express = require('express');
 const path = require('path');
 const WebSocket = require('ws');
@@ -6,50 +6,46 @@ const WebSocket = require('ws');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve file statici
 app.use(express.static(__dirname));
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('*', (req,res) => res.sendFile(path.join(__dirname,'index.html')));
 
-// Server
 const server = app.listen(PORT, () => console.log(`Server avviato su porta ${PORT}`));
-
-// WebSocket
 const wss = new WebSocket.Server({ server });
-let clients = [];
+
+let players = []; // contiene max 2 giocatori
 
 wss.on('connection', ws => {
-  if (clients.length >= 2) {
-    ws.send(JSON.stringify({ error: "Partita già completa" }));
+  if(players.length >= 2){
+    ws.send(JSON.stringify({type:'full', msg:'Partita piena, attendi'}));
     ws.close();
     return;
   }
 
-  clients.push(ws);
-  const color = clients.length === 1 ? 'nim' : 'mor';
-  ws.send(JSON.stringify({ type: 'assignColor', color }));
+  const color = players.length === 0 ? 'nim' : 'mor';
+  players.push({ws,color});
 
-  // Notifica quando entrambi i giocatori sono connessi
-  if (clients.length === 2) {
-    clients.forEach(c => {
-      if (c.readyState === WebSocket.OPEN)
-        c.send(JSON.stringify({ type: 'bothConnected' }));
-    });
+  ws.send(JSON.stringify({type:'assignColor', color}));
+
+  if(players.length === 2){
+    // notifico entrambi che la partita parte
+    players.forEach(p => p.ws.send(JSON.stringify({type:'startGame', msg:'Giocatori connessi, inizia la partita!'})));
   }
 
   ws.on('message', message => {
-    // Invia la mossa all'altro giocatore
-    clients.forEach(client => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
+    // inoltra solo all’altro giocatore
+    players.forEach(p => {
+      if(p.ws !== ws && p.ws.readyState === WebSocket.OPEN){
+        p.ws.send(message);
       }
     });
   });
 
   ws.on('close', () => {
-    clients = clients.filter(c => c !== ws);
-    clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN)
-        client.send(JSON.stringify({ type: 'opponentLeft' }));
+    players = players.filter(p => p.ws !== ws);
+    players.forEach(p => {
+      if(p.ws.readyState === WebSocket.OPEN){
+        p.ws.send(JSON.stringify({type:'opponentLeft', msg:'Avversario disconnesso'}));
+      }
     });
   });
 });
